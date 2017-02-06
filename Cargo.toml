@@ -1,0 +1,13 @@
+[package]
+name = "rush"
+version = "0.1.0"
+authors = ["Patrik Cyvoct <patrik.cyvoct@gmail.com>"]
+
+[dependencies]
+rustyline = "1.0.0"
+ansi_term = "0.9"
+
+[lib]
+doc = true
+name = "rushlib"
+path = "src/lib.rs"

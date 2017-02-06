@@ -6,7 +6,7 @@ pub struct CommandLine {
 impl CommandLine {
     pub fn new(s: String) -> CommandLine {
         let bg = s.contains("&");
-        let s = s.trim().to_string().replace("&", "");
+        let s = s.replace("&", "");
         CommandLine { line: s, bg: bg}
     }
 

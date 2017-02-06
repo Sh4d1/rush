@@ -4,3 +4,4 @@ extern crate ansi_term;
 
 pub mod prompt;
 pub mod command;
+pub mod functions;

@@ -1,5 +1,6 @@
 
 use std::env::{current_dir, home_dir};
+use std::env;
 use ansi_term::Colour::Purple;
 use ansi_term::Colour::Green;
 
@@ -11,7 +12,10 @@ pub struct Prompt {
 impl Prompt {
     pub fn new() -> Prompt {
         let mut prompt = Prompt {
-            user: Purple.paint("patrik").to_string(),
+            user: match env::var("USER") {
+                Ok(val) => Purple.paint(val).to_string(),
+                Err(e) => Purple.paint("?").to_string(),
+            },
             pwd: "".to_string(),
         };
         prompt.update_pwd();

@@ -1,11 +1,14 @@
 use std::process::Command;
 
-use std::process::Output;
-use std::process::*;
 use command::command::CommandLine;
+use functions::cd;
 
-pub fn parse(command: String) {
+pub fn parse(mut command: String) {
+    command = command.trim().to_string();
     if command.is_empty() {
+        return;
+    } else if command.starts_with("cd") {
+        cd::change_dir(command.split_off(2).trim().to_string());
         return;
     }
     let command = CommandLine::new(command);
@@ -18,7 +21,6 @@ pub fn execute(command: CommandLine) {
     let args: Vec<&str> = args.trim().split(' ').collect();
     let args = args.as_slice();
 
-    //let mut exec = Command::new(&args[0]).args(&args[1.. ]); //.spawn().expect("failed to execute child"));
 
     if let Ok(mut child) = Command::new(&args[0]).args(&args[1.. ]).spawn() {
         if !command.get_bg() {
@@ -27,25 +29,5 @@ pub fn execute(command: CommandLine) {
     } else {
         println!("Unknown command : {}", &args[0]);
     }
-    //if let Ok(exec) = exec.spawn() {
-    //
-    //}
-    //.spawn().expect("failed to execute child");
-
-
-
-    //if command.get_bg() {
-    //
-    //} else {
-    //    if args.len() > 1 {
-    //        Command::new(&args[0]).args(&args[1.. ]).output().ok()
-    //    } else if args.len() == 1{
-    //        Command::new(&args[0]).output().ok()
-    //    } else {
-    //        Command::new("").output().ok()
-    //    }
-    //}
-
-
 
 }

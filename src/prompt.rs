@@ -3,11 +3,12 @@ use std::env::{current_dir, home_dir};
 use std::env;
 use ansi_term::Colour::Purple;
 use ansi_term::Colour::Green;
-
+use ansi_term::Colour::Red;
 
 pub struct Prompt {
     user: String,
     cwd: String,
+    error: i8,
 }
 impl Prompt {
     pub fn new() -> Prompt {
@@ -17,13 +18,18 @@ impl Prompt {
                 Err(_) => Purple.paint("?").to_string(),
             },
             cwd: "".to_string(),
+            error: 0,
         };
         prompt.update_cwd();
         prompt
     }
 
     pub fn print(&self) -> String {
-        format!("{}:{} > ", self.user, self.cwd)
+        if self.error != 0 {
+            format!("{} {}:{} > ", Red.paint(format!("\u{2718} {}", self.error)).to_string(), self.user, self.cwd)
+        } else {
+            format!("{}:{} > ", self.user, self.cwd)
+        }
     }
 
     pub fn update_cwd(&mut self) {
@@ -33,6 +39,10 @@ impl Prompt {
         self.cwd = if cwd.starts_with(homedir.as_str()) {
             Green.paint(format!("~{}", cwd.split_off(homedir.len()))).to_string()
             } else { Green.paint(cwd).to_string() };
+    }
+
+    pub fn update_error(&mut self, error: i8) {
+        self.error = error;
     }
 
 }

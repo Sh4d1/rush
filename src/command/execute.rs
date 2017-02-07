@@ -8,7 +8,7 @@ use self::nix::Errno;
 use self::nix::sys::signal::Signal;
 
 use std::env;
-
+use std::process;
 use std::borrow::Cow;
 use std::path::{Path,PathBuf};
 
@@ -29,8 +29,7 @@ fn context(s: &str) -> Result<Option<Cow<'static, str>>, env::VarError> {
 
 
 
-pub fn parse(mut command: String) {
-    command = command.trim().to_string();
+pub fn parse(mut command: String) -> i8 {
 
     command = match shellexpand::full_with_context(command.as_str(), home_dir, context) {
         Ok(s) => s.to_string(),
@@ -39,19 +38,19 @@ pub fn parse(mut command: String) {
 
 
     if command.is_empty() {
-        return;
+        return 0;
     } else if command.starts_with("cd") {
-        cd::change_dir(command.split_off(2).trim().to_string());
-        return;
+        return cd::change_dir(command.split_off(2).trim().to_string());
     }
     let command = CommandLine::new(command);
-    execute(command);
+    execute(command)
 
 }
 
-pub fn execute(command: CommandLine) {
+pub fn execute(command: CommandLine) -> i8 {
 
 
+    let mut err_code = 0;
     match fork() {
         Ok(ForkResult::Child)  => {
             let args = command.get_command();
@@ -60,16 +59,17 @@ pub fn execute(command: CommandLine) {
 
             let _ = exec::Command::new(&args[0]).args(&args[1.. ]).exec();
             println!("rush: unknown command {}", &args[0]);
-
+            process::exit(1);
         },
         Ok(ForkResult::Parent{child})  => {
             if !command.get_bg() {
                 loop {
                     match waitpid(child, None) {
                         Ok(WaitStatus::StillAlive) => (),
+                        Ok(WaitStatus::Exited(_, code)) => { err_code = code; break}
                         //Ok(WaitStatus::Signaled(_, Signal::SIGTERM, _)) => break,
                         Err(Error::Sys(Errno::EINTR)) => (),
-                        a => {println!("{:?}", a); break}
+                        _ => break
                     }
                 }
                 //waitpid(child, None);
@@ -77,13 +77,7 @@ pub fn execute(command: CommandLine) {
 
         },
         Err(_) => ()
-    }
-    //if let Ok(mut child) = Command::new(&args[0]).args(&args[1.. ]).spawn() {
-    //    if !command.get_bg() {
-    //        child.wait().expect("Couldn't wait for process.");
-    //    }
-    //} else {
-    //    println!("Unknown command : {}", &args[0]);
-    //}
 
+    }
+    err_code
 }

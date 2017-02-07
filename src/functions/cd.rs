@@ -4,11 +4,12 @@ use std::path::{Path,PathBuf};
 
 
 
-pub fn change_dir(mut args: String) {
+pub fn change_dir(mut args: String) -> i8 {
+    let mut err_code = 0;
     let size = args.split_whitespace().count();
 
     match size {
-        x if x > 1 => println!("Too many arguments for cd command"),
+        x if x > 1 => { err_code = 2; println!("Too many arguments for cd command"); },
         0 => {
             env::set_current_dir(Path::new(env::var("HOME").expect("no $HOME var in env").as_str()));
         }
@@ -30,15 +31,16 @@ pub fn change_dir(mut args: String) {
 
             if path.exists(){
                 match env::set_current_dir(path) {
-                    Err(e) => println!("Error: {}", e),
+                    Err(e) => { err_code = 1; println!("Error: {}", e); },
                     _ => (),
                 }
 
             } else {
                 println!("{} does not exist", args);
+                err_code = 1;
             }
 
         },
     }
-
+    err_code
 }

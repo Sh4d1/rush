@@ -14,7 +14,7 @@ fn main() {
     let mut prompt = Prompt::new();
     let mut rl = rustyline::Editor::<()>::new();
     loop {
-        prompt.update_pwd();
+        prompt.update_cwd();
         let readline = rl.readline(prompt.print().as_str());
         match readline {
             Ok(line) => {

@@ -7,32 +7,32 @@ use ansi_term::Colour::Green;
 
 pub struct Prompt {
     user: String,
-    pwd: String,
+    cwd: String,
 }
 impl Prompt {
     pub fn new() -> Prompt {
         let mut prompt = Prompt {
             user: match env::var("USER") {
                 Ok(val) => Purple.paint(val).to_string(),
-                Err(e) => Purple.paint("?").to_string(),
+                Err(_) => Purple.paint("?").to_string(),
             },
-            pwd: "".to_string(),
+            cwd: "".to_string(),
         };
-        prompt.update_pwd();
+        prompt.update_cwd();
         prompt
     }
 
     pub fn print(&self) -> String {
-        format!("{}:{} > ", self.user, self.pwd)
+        format!("{}:{} > ", self.user, self.cwd)
     }
 
-    pub fn update_pwd(&mut self) {
-        let mut pwd = current_dir().unwrap().as_path().to_str().expect("Failed : path -> str").to_string();
+    pub fn update_cwd(&mut self) {
+        let mut cwd = current_dir().unwrap().as_path().to_str().expect("Failed : path -> str").to_string();
         let homedir = home_dir().unwrap().as_path().to_str().expect("Failed : path -> str").to_string();
 
-        self.pwd = if pwd.starts_with(homedir.as_str()) {
-            Green.paint(format!("~{}", pwd.split_off(homedir.len()))).to_string()
-            } else { Green.paint(pwd).to_string() };
+        self.cwd = if cwd.starts_with(homedir.as_str()) {
+            Green.paint(format!("~{}", cwd.split_off(homedir.len()))).to_string()
+            } else { Green.paint(cwd).to_string() };
     }
 
 }

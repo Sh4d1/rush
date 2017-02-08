@@ -1,7 +1,7 @@
 #![cfg(not(test))]
+#![feature(field_init_shorthand)]
 extern crate rushlib;
 extern crate rustyline;
-
 use rustyline::error::ReadlineError;
 use rustyline::completion::FilenameCompleter;
 use std::process;
@@ -11,8 +11,12 @@ use rushlib::command::execute;
 extern crate ansi_term;
 use ansi_term::Colour::Fixed;
 
+use rushlib::signals::init_signals;
 
 fn main() {
+
+    init_signals();
+
     let mut exit_code = 0;
     let mut prompt = Prompt::new();
     let mut rl = rustyline::Editor::<FilenameCompleter>::new();
@@ -33,7 +37,7 @@ fn main() {
                 prompt.update_error(execute::parse(line));
             },
             Err(ReadlineError::Interrupted) => {
-                println!("{}", Fixed(221).on(Fixed(124)).paint("^C"));
+                print!("{}", Fixed(221).on(Fixed(124)).paint("^C"));
             },
             Err(ReadlineError::Eof) => {
                 break

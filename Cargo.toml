@@ -1,6 +1,6 @@
 [package]
 name = "rush"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Patrik Cyvoct <patrik.cyvoct@gmail.com>"]
 
 [dependencies]
@@ -9,6 +9,8 @@ ansi_term = "0.9"
 shellexpand = "1.0.0"
 nix = "0.7.0"
 exec = "0.2.0"
+chan-signal = "0.2.0"
+lazy_static = "0.2.2"
 
 [lib]
 doc = true

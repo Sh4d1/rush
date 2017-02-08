@@ -17,8 +17,8 @@ pub fn bg(args: String) -> i8 {
                 let a = JOB.lock().unwrap().pop_stopped();
                 match a {
                     Some((pid, name, State::Stopped)) => {
-                        println!("Send job {} to background", name);
-                        kill(pid, signal::SIGCONT).expect("sigcont failed");
+                        println!("Send job {} to background : {}", name, pid);
+                        kill(-pid, signal::SIGCONT).expect("sigcont failed");
                         JOB.lock().unwrap().push(pid, name, State::Running);
                         tcsetpgrp(1, getpid()).expect("tcsetpgrp failed");
                     },

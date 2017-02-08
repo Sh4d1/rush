@@ -18,7 +18,7 @@ pub fn fg(args: String) -> i8 {
                 let (pid, name, state) = JOB.lock().unwrap().pop();
                 println!("Send job {} to foreground", name);
                 match state {
-                    State::Stopped => kill(pid, signal::SIGCONT).expect("sigcont failed"),
+                    State::Stopped => kill(-pid, signal::SIGCONT).expect("sigcont failed"),
                     _ => (),
                 }
 

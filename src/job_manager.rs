@@ -24,16 +24,6 @@ impl JobManager {
         self.list.len() as i32
     }
 
-    //pub fn get_number_stopped(&self) -> u32 {
-    //    let mut n: u32 = 0;
-    //    for a in &(self.list) {
-    //        match a.2 {
-    //            State::Stopped => n += 1,
-    //            _ => ()
-    //        }
-    //    }
-    //    return n
-    //}
 
     pub fn push(&mut self, pid: i32, name: String, state: State) {
         self.list.push((pid, name, state));
@@ -45,8 +35,8 @@ impl JobManager {
 
     pub fn pop_stopped(&mut self) -> Option<(i32, String, State)> {
         let mut i = 0;
-        for a in self.list.iter() {
-            match a {
+        for job in self.list.iter() {
+            match job {
                 &(_, _, State::Stopped) => break,
                 _ => i += 1,
             }
@@ -54,7 +44,7 @@ impl JobManager {
         if i < self.list.len() {
             Some(self.list.remove(i))
         } else {
-            None//self.list.pop().expect("Should not pop empty job")
+            None
         }
     }
 

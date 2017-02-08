@@ -1,43 +1,20 @@
-extern crate shellexpand;
 extern crate nix;
 extern crate exec;
-use self::nix::unistd::{fork, ForkResult, setpgid, getpid, tcsetpgrp};
+use self::nix::unistd::{fork, ForkResult, setpgid, getpid, tcsetpgrp, execvp};
 use self::nix::sys::wait::*;
-
 use self::nix::Error;
 use self::nix::Errno;
 
-use std::env;
 use std::process;
-use std::borrow::Cow;
-use std::path::{Path,PathBuf};
 use job_manager::*;
-
 use command::command::CommandLine;
 use functions::*;
 
+pub fn parse(command: String) -> i8 {
 
 
-fn home_dir() -> Option<PathBuf> { Some(Path::new(env::var("HOME").expect("no $HOME var in env").as_str()).into()) }
-
-fn context(s: &str) -> Result<Option<Cow<'static, str>>, env::VarError> {
-
-    match env::var(s) {
-        Ok(value) => Ok(Some(value.into())),
-        Err(env::VarError::NotPresent) => Ok(Some("".into())),
-        Err(e) => Err(e)
-    }
-}
-
-
-
-pub fn parse(mut command: String) -> i8 {
-
-    command = match shellexpand::full_with_context(command.as_str(), home_dir, context) {
-        Ok(s) => s.to_string(),
-        _ => "".to_string()
-    };
-
+    let command_line = CommandLine::new(command);
+    let mut command = command_line.get_command();
 
     if command.is_empty() {
         return 0;
@@ -50,8 +27,7 @@ pub fn parse(mut command: String) -> i8 {
     } else if command.starts_with("jobs") {
         return jobs::jobs(command.split_off(4).trim().to_string());
     }
-    let command = CommandLine::new(command);
-    execute(command)
+    execute(command_line)
 
 }
 
@@ -64,18 +40,24 @@ pub fn execute(command: CommandLine) -> i8 {
 
     match fork() {
         Ok(ForkResult::Child)  => {
+            use std::ffi::CString;
             let args = command.get_command();
+            //let args_c: Vec<Vec<u8>> = args.trim().split(' ').collect().iter().map(|x| CString::new(x)).collect();
             let args: Vec<&str> = args.trim().split(' ').collect();
+            let args_c: Vec<CString> = args.iter().map(|x| CString::new(x.as_bytes()).unwrap()).collect();
             let args = args.as_slice();
+            let args_c = args_c.as_slice();
+
+
             setpgid(getpid(), getpid()).expect("setpgid failed");
-            let _ = exec::Command::new(&args[0]).args(&args[1.. ]).exec();
+            let _ = execvp(&args_c[0], &args_c[0..]);
             println!("rush: unknown command {}", &args[0]);
             process::exit(1);
         },
         Ok(ForkResult::Parent{child})  => {
             tcsetpgrp(1, child).expect("tcsetpgrp failed");
-            JOB.lock().unwrap().set_active(child, command.get_command().to_owned());
             if !command.get_bg() {
+                JOB.lock().unwrap().set_active(child, command.get_command().to_owned());
                 err_code = wait(child, command.get_command());
             } else {
                 JOB.lock().unwrap().push(child, command.get_command().to_owned(), State::Running);
@@ -102,8 +84,11 @@ pub fn wait(pid: i32, name: String) -> i8 {
             Ok(WaitStatus::Exited(_, code)) => { err_code = code; break}
             Ok(WaitStatus::Signaled(_, self::nix::sys::signal::Signal::SIGINT, _)) => break,
             ////Ok(WaitStatus::Signaled(a, self::nix::sys::signal::Signal::SIGTERM, _)) => println!("a"),
-            Ok(WaitStatus::Stopped(_, self::nix::sys::signal::Signal::SIGTTOU)) => {signal::kill(pid, signal::SIGCONT).expect("sigcont failed"); println!("{}", pid);},
-            Ok(WaitStatus::Stopped(_, self::nix::sys::signal::Signal::SIGSTOP)) => {signal::kill(pid, signal::SIGCONT).expect("sigcont failed");  println!("{}", pid);},
+            Ok(WaitStatus::Stopped(_, self::nix::sys::signal::Signal::SIGTTOU)) => {
+                tcsetpgrp(1, pid).expect("tcsetpgrp failed");
+                signal::kill(pid, signal::SIGCONT).expect("sigcont failed");
+            },
+            Ok(WaitStatus::Stopped(_, self::nix::sys::signal::Signal::SIGSTOP)) => {signal::kill(pid, signal::SIGCONT).expect("sigcont failed");  println!("stop {}", pid);},
             Ok(WaitStatus::Stopped(_, self::nix::sys::signal::Signal::SIGTTIN)) => {
                 //let mut buffer = String::new();
                 //io::stdin().read_to_string(&mut buffer).unwrap();

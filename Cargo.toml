@@ -7,7 +7,7 @@ authors = ["Patrik Cyvoct <patrik.cyvoct@gmail.com>"]
 rustyline = "1.0.0"
 ansi_term = "0.9"
 shellexpand = "1.0.0"
-nix = "0.7.0"
+nix = { git = "https://github.com/nix-rust/nix"}
 exec = "0.2.0"
 chan-signal = "0.2.0"
 lazy_static = "0.2.2"
